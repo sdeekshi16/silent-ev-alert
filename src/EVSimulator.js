@@ -1,67 +1,38 @@
 // src/EVSimulator.js
+import React, { useEffect, useState } from "react";
+import { db } from "./firebase";
+import { ref, set } from "firebase/database";
 
-import React, { useEffect, useState } from 'react';
-import { db } from './firebase';
-import { ref, set } from 'firebase/database';
+const EV_ID = "EV001";
 
 export default function EVSimulator() {
-  const [vehicleId, setVehicleId] = useState("EV001");
-  const [location, setLocation] = useState({ lat: null, lng: null });
+  const [coords, setCoords] = useState({ lat: null, lng: null });
 
-  // 1. Get GPS location from browser
   useEffect(() => {
-    if ("geolocation" in navigator) {
-      const watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          setLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (err) => {
-          console.error("GPS Error:", err);
-        },
-        { enableHighAccuracy: true }
-      );
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setCoords({ lat: latitude, lng: longitude });
 
-      // Stop watching on unmount
-      return () => navigator.geolocation.clearWatch(watchId);
-    } else {
-      alert("Geolocation not supported by your browser");
-    }
+        set(ref(db, `vehicles/${EV_ID}`), {
+          lat: latitude,
+          lng: longitude,
+          timestamp: Date.now()
+        });
+      },
+      (err) => console.error("GPS error", err),
+      { enableHighAccuracy: true }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-  // 2. Send live location to Firebase every 5 seconds
-  useEffect(() => {
-    if (location.lat === null || location.lng === null) return;
-
-    const interval = setInterval(() => {
-      set(ref(db, 'vehicles/' + vehicleId), {
-        id: vehicleId,
-        x: location.lat,
-        y: location.lng,
-        timestamp: Date.now()
-      });
-    }, 5000); // Update every 5 sec
-
-    return () => clearInterval(interval);
-  }, [location, vehicleId]);
-
   return (
-    <div style={{ padding: '20px', border: '1px solid #aaa', borderRadius: '10px' }}>
+    <div style={{ textAlign: "center", marginTop: "50px" }}>
       <h2>EV GPS Tracker</h2>
-      <p>Tracking real-time GPS location and updating Firebase</p>
-      <label>
-        EV ID:
-        <input
-          type="text"
-          value={vehicleId}
-          onChange={(e) => setVehicleId(e.target.value)}
-          style={{ marginLeft: '10px' }}
-        />
-      </label>
-      <p>Latitude: {location.lat ? location.lat.toFixed(6) : "Loading..."}</p>
-      <p>Longitude: {location.lng ? location.lng.toFixed(6) : "Loading..."}</p>
+      <p>EV ID: {EV_ID}</p>
+      <p>Latitude: {coords.lat ?? "Loading..."}</p>
+      <p>Longitude: {coords.lng ?? "Loading..."}</p>
     </div>
   );
 }
