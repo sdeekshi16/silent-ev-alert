@@ -1,20 +1,27 @@
-// src/App.js
-import React, { useState } from "react";
-import EVSimulator from "./EVSimulator";
-import PedestrianAlert from "./PedestrianAlert";
+import React, { useState } from 'react';
+import EVSimulator from './EVSimulator';
+import PedestrianAlert from './PedestrianAlert';
+import NonEVAlert from './NonEVAlert';
 
-export default function App() {
+function App() {
   const [role, setRole] = useState(null);
 
   if (!role) {
     return (
-      <div style={{ textAlign: "center", marginTop: "100px" }}>
+      <div style={{ textAlign: 'center', marginTop: '2rem' }}>
         <h2>Select Your Role</h2>
-        <button onClick={() => setRole("ev")}>EV Rider</button>
-        <button onClick={() => setRole("pedestrian")}>Pedestrian</button>
+        <button onClick={() => setRole('ev')}>EV Rider</button>
+        <button onClick={() => setRole('pedestrian')}>Pedestrian</button>
+        <button onClick={() => setRole('nonev')}>Non-EV Rider</button>
       </div>
     );
   }
 
-  return role === "ev" ? <EVSimulator /> : <PedestrianAlert />;
+  if (role === 'ev') return <EVSimulator />;
+  if (role === 'pedestrian') return <PedestrianAlert />;
+  if (role === 'nonev') return <NonEVAlert />;
+
+  return null;
 }
+
+export default App;

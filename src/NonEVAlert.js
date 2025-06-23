@@ -1,4 +1,4 @@
-// src/PedestrianAlert.js
+// src/NonEVAlert.js
 import React, { useEffect, useState } from 'react';
 import { db } from './firebase';
 import { ref, onValue } from 'firebase/database';
@@ -12,11 +12,10 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export default function PedestrianAlert() {
+export default function NonEVAlert() {
   const [userLat, setUserLat] = useState(null);
   const [userLng, setUserLng] = useState(null);
-  const [alert, setAlert] = useState('');
-  const [evs, setEvs] = useState([]);
+  const [entities, setEntities] = useState([]);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition((position) => {
@@ -24,41 +23,44 @@ export default function PedestrianAlert() {
       setUserLng(position.coords.longitude);
     });
 
-    const evRef = ref(db, 'vehicles');
-    onValue(evRef, (snapshot) => {
+    const vehiclesRef = ref(db, 'vehicles');
+    onValue(vehiclesRef, (snapshot) => {
       const data = snapshot.val();
-      const evList = [];
+      const visibleEntities = [];
 
       if (data && userLat && userLng) {
-        Object.values(data).forEach(vehicle => {
-          const distance = haversine(userLat, userLng, vehicle.lat, vehicle.lng);
-          if (vehicle.role === 'ev' && distance < 50) {
-            setAlert(`⚠️ EV nearby (${vehicle.id}) at ${(distance).toFixed(2)} meters!`);
+        Object.values(data).forEach(entity => {
+          if (entity.role === 'ev' || entity.role === 'pedestrian') {
+            const distance = haversine(userLat, userLng, entity.lat, entity.lng);
+            visibleEntities.push({
+              id: entity.id,
+              role: entity.role,
+              distance: distance.toFixed(2)
+            });
           }
-          evList.push({
-            ...vehicle,
-            distance: (distance / 1).toFixed(2)
-          });
         });
       }
 
-      setEvs(evList);
+      setEntities(visibleEntities);
     });
   }, [userLat, userLng]);
 
   return (
     <div>
-      <h2>Pedestrian Alert</h2>
+      <h2>Non-EV Rider View</h2>
       {userLat && userLng && (
         <p>Your location: 📍 {userLat.toFixed(5)}, {userLng.toFixed(5)}</p>
       )}
-      <p>{alert || '✅ All clear. No EV nearby.'}</p>
-      <h4>All EVs:</h4>
-      {evs.map(ev => (
-        <p key={ev.id}>
-          {ev.id} → {ev.distance} meters [{ev.role}]
-        </p>
-      ))}
+      <h4>Nearby EVs & Pedestrians:</h4>
+      {entities.length > 0 ? (
+        entities.map(ent => (
+          <p key={ent.id}>
+            {ent.id} ({ent.role}) → {ent.distance} meters
+          </p>
+        ))
+      ) : (
+        <p>✅ All clear. No entities nearby.</p>
+      )}
     </div>
   );
 }
