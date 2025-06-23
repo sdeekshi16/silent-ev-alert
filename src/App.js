@@ -1,27 +1,41 @@
-import React, { useState } from 'react';
-import EVSimulator from './EVSimulator';
-import PedestrianAlert from './PedestrianAlert';
-import NonEVAlert from './NonEVAlert';
+// src/App.js
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import EVSimulator from "./EVSimulator";
+import PedestrianAlert from "./PedestrianAlert";
+import NonEVAlert from "./NonEVAlert";
+import Register from "./Register";
+import Login from "./Login";
+import Dashboard from "./Dashboard";
+import ChangeRole from "./ChangeRole";
+import ProtectedRoute from "./ProtectedRoute";
 
 function App() {
-  const [role, setRole] = useState(null);
-
-  if (!role) {
-    return (
-      <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-        <h2>Select Your Role</h2>
-        <button onClick={() => setRole('ev')}>EV Rider</button>
-        <button onClick={() => setRole('pedestrian')}>Pedestrian</button>
-        <button onClick={() => setRole('nonev')}>Non-EV Rider</button>
-      </div>
-    );
-  }
-
-  if (role === 'ev') return <EVSimulator />;
-  if (role === 'pedestrian') return <PedestrianAlert />;
-  if (role === 'nonev') return <NonEVAlert />;
-
-  return null;
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        
+        {/* Protected Routes */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute><Dashboard /></ProtectedRoute>
+        } />
+        <Route path="/ev" element={
+          <ProtectedRoute><EVSimulator /></ProtectedRoute>
+        } />
+        <Route path="/pedestrian" element={
+          <ProtectedRoute><PedestrianAlert /></ProtectedRoute>
+        } />
+        <Route path="/non-ev" element={
+          <ProtectedRoute><NonEVAlert /></ProtectedRoute>
+        } />
+        <Route path="/change-role" element={
+          <ProtectedRoute><ChangeRole /></ProtectedRoute>
+        } />
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;

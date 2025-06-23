@@ -2,13 +2,15 @@
 import React, { useEffect, useState } from 'react';
 import { db } from './firebase';
 import { ref, onValue } from 'firebase/database';
+import ChangeRole from './ChangeRole';
+import Navbar from './Navbar';
 
 function haversine(lat1, lon1, lat2, lon2) {
   const R = 6371e3;
   const toRad = deg => deg * Math.PI / 180;
   const φ1 = toRad(lat1), φ2 = toRad(lat2);
   const Δφ = toRad(lat2 - lat1), Δλ = toRad(lon2 - lon1);
-  const a = Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
+  const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
@@ -47,20 +49,35 @@ export default function NonEVAlert() {
 
   return (
     <div>
-      <h2>Non-EV Rider View</h2>
-      {userLat && userLng && (
-        <p>Your location: 📍 {userLat.toFixed(5)}, {userLng.toFixed(5)}</p>
-      )}
-      <h4>Nearby EVs & Pedestrians:</h4>
-      {entities.length > 0 ? (
-        entities.map(ent => (
-          <p key={ent.id}>
-            {ent.id} ({ent.role}) → {ent.distance} meters
-          </p>
-        ))
-      ) : (
-        <p>✅ All clear. No entities nearby.</p>
-      )}
+      <Navbar role="Non-EV Rider" />
+      <div style={styles.container}>
+        <h2>🏍️ Non-EV Rider View</h2>
+        {userLat && userLng && (
+          <p>📍 Your location: {userLat.toFixed(5)}, {userLng.toFixed(5)}</p>
+        )}
+
+        <h4>Nearby EVs & Pedestrians:</h4>
+        {entities.length > 0 ? (
+          entities.map(ent => (
+            <p key={ent.id}>
+              {ent.id} ({ent.role}) → {ent.distance} meters
+            </p>
+          ))
+        ) : (
+          <p>✅ All clear. No nearby entities.</p>
+        )}
+
+        <ChangeRole />
+      </div>
     </div>
   );
 }
+
+const styles = {
+  container: {
+    padding: "20px",
+    maxWidth: "500px",
+    margin: "auto",
+    textAlign: "center"
+  }
+};
